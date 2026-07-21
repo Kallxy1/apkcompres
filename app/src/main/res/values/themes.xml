@@ -1,0 +1,16 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.WhatsappHQStatusCompressor" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/whatsapp_green</item>
+        <item name="colorPrimaryVariant">@color/whatsapp_green_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/whatsapp_green_light</item>
+        <item name="colorSecondaryVariant">@color/whatsapp_green_dark</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">@color/whatsapp_green_dark</item>
+        <!-- Customize your theme here. -->
+    </style>
+</resources>

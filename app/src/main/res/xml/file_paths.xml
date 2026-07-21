@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Mengizinkan berbagi file di folder cache aplikasi -->
+    <cache-path name="compressed_videos" path="." />
+    <!-- Mengizinkan berbagi file di folder eksternal aplikasi -->
+    <external-files-path name="external_videos" path="." />
+</paths>
