@@ -21,18 +21,15 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
 
-      # Jika file gradlew belum ada, buat gradle wrapper otomatis di server GitHub
-      - name: Set up Gradle Wrapper
-        run: |
-          if [ ! -f "gradlew" ]; then
-            gradle wrapper --gradle-version 8.0
-          fi
-          chmod +x gradlew
+      # Menggunakan Gradle Action resmi untuk memasang Gradle versi 8.0 yang cocok dengan Android Gradle Plugin 8.0.2
+      - name: Setup Gradle 8.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.0'
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon
+        run: gradle assembleDebug --no-daemon
 
       - name: Upload Finished APK
         uses: actions/upload-artifact@v4
