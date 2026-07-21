@@ -34,5 +34,5 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     
     // FFmpeg Kit Full (wajib versi FULL untuk encoding x264/AAC)
-    implementation 'com.arthenica:ffmpeg-kit-full:5.1'
+    implementation 'com.arthenica:ffmpeg-kit-full:6.0-2'
 }
