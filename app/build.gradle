@@ -8,18 +8,32 @@ android {
 
     defaultConfig {
         applicationId "com.kamu.statusmaker"
-        minSdk 24
+        
+        // Kunci Sukses 1: Menurunkan minSdk ke 21 (Android 5.0 Lollipop) agar bisa diinstal di HP 32-bit lama / HP kentang
+        minSdk 21
         targetSdk 33
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Kunci Sukses 2: Optimasi ukuran file dengan membatasi arsitektur CPU (ABI)
+        // Hanya menyertakan 32-bit (armeabi-v7a) untuk HP Anda dan 64-bit (arm64-v8a) untuk HP modern.
+        // Menghapus library x86 & x86_64 (emulator) yang membuat ukuran APK membengkak tidak berguna.
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true // Mengaktifkan optimasi kode R8/ProGuard untuk mengecilkan ukuran APK
+            shrinkResources true // Menghapus file gambar/resource yang tidak terpakai
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+            shrinkResources false
         }
     }
     compileOptions {
@@ -33,6 +47,6 @@ dependencies {
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     
-    // FFmpeg Kit Full GPL (Wajib menggunakan full-gpl + .LTS agar bisa diunduh dari Maven Central dan mendukung encoder libx264)
+    // FFmpeg Kit Full GPL (.LTS mendukung penuh minSdk 21 dan arsitektur 32-bit)
     implementation 'com.arthenica:ffmpeg-kit-full-gpl:6.0-2.LTS'
 }
