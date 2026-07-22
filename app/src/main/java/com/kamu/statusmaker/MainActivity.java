@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Typeface;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
@@ -33,6 +34,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.documentfile.provider.DocumentFile;
 
 import java.io.File;
@@ -56,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Tab 1: Compress Views
     private Button btnSelectVideo, btnProcessVideo, btnShare;
-    private TextView tvSelectedFile, tvProgressStatus, logStep1, logStep2, logStep3, logStep4;
+    private TextView tvSelectedFile, logStep1, logStep2, logStep3, logStep4;
     private SwitchCompat switchEnhance;
     private CardView cardProgress;
     private ProgressBar progressBar;
@@ -176,14 +178,15 @@ public class MainActivity extends AppCompatActivity {
         screenSaver.setVisibility(screenNumber == 2 ? View.VISIBLE : View.GONE);
         screenDeleted.setVisibility(screenNumber == 3 ? View.VISIBLE : View.GONE);
 
+        // Perbaikan: Gunakan setTypeface untuk mengubah ketebalan teks programmatically di Java
         txtTabCompress.setTextColor(ContextCompat.getColor(this, screenNumber == 1 ? R.color.whatsapp_green : R.color.gray_dark));
-        txtTabCompress.setTextStyle(screenNumber == 1 ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        txtTabCompress.setTypeface(null, screenNumber == 1 ? Typeface.BOLD : Typeface.NORMAL);
 
         txtTabSaver.setTextColor(ContextCompat.getColor(this, screenNumber == 2 ? R.color.whatsapp_green : R.color.gray_dark));
-        txtTabSaver.setTextStyle(screenNumber == 2 ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        txtTabSaver.setTypeface(null, screenNumber == 2 ? Typeface.BOLD : Typeface.NORMAL);
 
         txtTabDeleted.setTextColor(ContextCompat.getColor(this, screenNumber == 3 ? R.color.whatsapp_green : R.color.gray_dark));
-        txtTabDeleted.setTextStyle(screenNumber == 3 ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+        txtTabDeleted.setTypeface(null, screenNumber == 3 ? Typeface.BOLD : Typeface.NORMAL);
 
         if (screenNumber == 2 || screenNumber == 3) {
             checkExistingFolderPermission();
@@ -459,7 +462,7 @@ public class MainActivity extends AppCompatActivity {
 
             File file = files.get(position);
             textView.setText(isDeletedMode ? "TERHAPUS" : "STATUS");
-            textView.setTextSize(10);
+            textView.setTextSize(10); // Perbaikan: Gunakan float murni, bukan literal "10sp"
 
             // Muat thumbnail gambar/video secara aman demi hemat RAM HP kentang
             if (file.getName().endsWith(".mp4")) {
@@ -481,7 +484,7 @@ public class MainActivity extends AppCompatActivity {
             // Klik item untuk membuka status (simulasi buka foto/video)
             convertView.setOnClickListener(v -> {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
-                Uri uri = androidx.core.content.FileProvider.getUriForFile(context, "com.kamu.statusmaker.fileprovider", file);
+                Uri uri = FileProvider.getUriForFile(context, "com.kamu.statusmaker.fileprovider", file);
                 intent.setDataAndType(uri, file.getName().endsWith(".mp4") ? "video/*" : "image/*");
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 context.startActivity(intent);
