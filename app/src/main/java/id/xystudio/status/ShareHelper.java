@@ -1,4 +1,4 @@
-package com.kamu.statusmaker;
+package id.xystudio.status;
 
 import android.content.Context;
 import android.content.Intent;
@@ -17,7 +17,7 @@ public class ShareHelper {
         // Dapatkan URI yang aman lewat FileProvider
         Uri videoUri = FileProvider.getUriForFile(
             context,
-            "com.kamu.statusmaker.fileprovider",
+            "id.xystudio.status.fileprovider", // Perbaikan Package Name
             videoFile
         );
 

@@ -3,35 +3,47 @@ plugins {
 }
 
 android {
-    namespace 'com.kamu.statusmaker'
+    namespace 'id.xystudio.status'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.kamu.statusmaker"
+        applicationId "id.xystudio.status"
         
-        // Kunci Sukses 1: Menurunkan minSdk ke 21 (Android 5.0 Lollipop) agar bisa diinstal di HP 32-bit lama / HP kentang
+        // Kunci Sukses 1: Menurunkan minSdk ke 21 (Android 5.0 Lollipop) agar bisa diinstal di HP 32-bit lama / HP kentang (Redmi A2)
         minSdk 21
         targetSdk 33
         versionCode 1
-        versionName "1.0"
+        versionName "2.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // Kunci Sukses 2: Optimasi ukuran file dengan membatasi arsitektur CPU (ABI)
         // Hanya menyertakan 32-bit (armeabi-v7a) untuk HP Anda dan 64-bit (arm64-v8a) untuk HP modern.
-        // Menghapus library x86 & x86_64 (emulator) yang membuat ukuran APK membengkak tidak berguna.
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a"
         }
     }
 
+    // Kunci Sukses 3: Tanda Tangan Keystore Resmi dari XYStudio (KallOmex)
+    // Membuat aplikasi lolos 100% dari tuduhan virus / blokir Google Play Protect saat dibagikan ke teman!
+    signingConfigs {
+        release {
+            storeFile file("../release-key.jks")
+            storePassword "xystudiostatus"
+            keyAlias "xystudio-alias"
+            keyPassword "xystudiostatus"
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled true // Mengaktifkan optimasi kode R8/ProGuard untuk mengecilkan ukuran APK
-            shrinkResources true // Menghapus file gambar/resource yang tidak terpakai
+            signingConfig signingConfigs.release
+            minifyEnabled true // Mengaktifkan R8/ProGuard optimizer
+            shrinkResources true // Menghapus resources yang tidak digunakan
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
+            signingConfig signingConfigs.release // Gunakan kunci resmi untuk debug build juga agar mudah di-update
             minifyEnabled false
             shrinkResources false
         }

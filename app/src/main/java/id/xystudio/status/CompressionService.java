@@ -1,4 +1,4 @@
-package com.kamu.statusmaker;
+package id.xystudio.status;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -100,7 +100,7 @@ public class CompressionService extends Service {
         );
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("StatusMax Pro - Sedang Bekerja")
+                .setContentTitle("StatusMax - Sedang Bekerja")
                 .setContentText(contentText)
                 .setSmallIcon(android.R.drawable.stat_sys_download)
                 .setProgress(100, progress, progress == 0)
@@ -122,7 +122,7 @@ public class CompressionService extends Service {
         );
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("StatusMax Pro - Selesai!")
+                .setContentTitle("StatusMax - Selesai!")
                 .setContentText(text)
                 .setSmallIcon(android.R.drawable.stat_sys_download_done)
                 .setContentIntent(pendingIntent)
@@ -135,7 +135,7 @@ public class CompressionService extends Service {
 
     private void updateNotificationFailure(String errorText) {
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("StatusMax Pro - Gagal")
+                .setContentTitle("StatusMax - Gagal")
                 .setContentText(errorText)
                 .setSmallIcon(android.R.drawable.stat_notify_error)
                 .setAutoCancel(true)

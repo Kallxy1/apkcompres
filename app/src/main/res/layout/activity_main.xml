@@ -261,6 +261,54 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Card: Video Preview Before Upload (New Feature!) -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardPreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="@color/white"
+                app:cardElevation="2dp"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/lblPreviewTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Pratinjau Hasil Video"
+                        android:textColor="@color/black"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
+
+                    <!-- Native VideoView Player -->
+                    <VideoView
+                        android:id="@+id/videoPreview"
+                        android:layout_width="160dp"
+                        android:layout_height="280dp" />
+
+                    <TextView
+                        android:id="@+id/lblPreviewDesc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Sentuh video untuk putar/jeda. Perhatikan ketajaman hasil filter kami sebelum mengirim ke WhatsApp!"
+                        android:textAlignment="center"
+                        android:textColor="@color/gray_dark"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
             <!-- Big Action Buttons -->
             <Button
                 android:id="@+id/btnProcessVideo"
@@ -322,13 +370,58 @@
             android:textColor="@color/gray_dark"
             android:textSize="12sp" />
 
+        <!-- Tab Selector: Video vs Gambar (New Feature!) -->
+        <LinearLayout
+            android:id="@+id/layoutMediaFilter"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="12dp"
+            android:background="@color/white"
+            android:orientation="horizontal"
+            android:padding="2dp">
+
+            <Button
+                android:id="@+id/btnFilterAll"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:backgroundTint="@color/black"
+                android:text="Semua"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                app:cornerRadius="6dp" />
+
+            <Button
+                android:id="@+id/btnFilterVideo"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:backgroundTint="@color/gray_light"
+                android:text="Video Saja"
+                android:textColor="@color/gray_dark"
+                android:textSize="11sp"
+                app:cornerRadius="6dp" />
+
+            <Button
+                android:id="@+id/btnFilterImage"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:backgroundTint="@color/gray_light"
+                android:text="Gambar Saja"
+                android:textColor="@color/gray_dark"
+                android:textSize="11sp"
+                app:cornerRadius="6dp" />
+        </LinearLayout>
+
         <Button
             android:id="@+id/btnGrantFolder"
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:layout_marginTop="16dp"
             android:backgroundTint="@color/black"
-            android:text="HUBUNGKAN FOLDER STATUS WHATSAPP"
+            android:text="HUBUNGKAN FOLDER STATUS"
             android:textColor="@color/white"
             android:textStyle="bold"
             app:cornerRadius="10dp" />
@@ -354,7 +447,7 @@
             android:textSize="13sp" />
     </LinearLayout>
 
-    <!-- SCREEN 3: RECOVERY CENTER (Pusat Pemulihan Pesan Terhapus & 1x Lihat) -->
+    <!-- SCREEN 3: RECOVERY CENTER (Anti-Tarik) -->
     <ScrollView
         android:id="@+id/screenDeleted"
         android:layout_width="match_parent"
@@ -465,6 +558,134 @@
         </LinearLayout>
     </ScrollView>
 
+    <!-- SCREEN 4: SETTINGS, ABOUT & CHANGELOG (New Screen!) -->
+    <ScrollView
+        android:id="@+id/screenSettings"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintTop_toBottomOf="@id/headerBar"
+        tools:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/lblTitleSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Pengaturan Aplikasi"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- Clean Cache Option -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardClearCache"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="@color/white"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/lblTitleCache"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Pembersih Cache Video"
+                        android:textColor="@color/black"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/lblDescCache"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="Menghapus semua file video hasil kompresi lama untuk mengosongkan memori HP Redmi A2 Anda."
+                        android:textColor="@color/gray_dark"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/btnClearCache"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="12dp"
+                        android:backgroundTint="@color/black"
+                        android:text="BERSIHKAN CACHE SEKARANG"
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
+                        app:cornerRadius="10dp" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Changelog & About -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardAbout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="@color/white"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/lblTitleAbout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Tentang &amp; Catatan Rilis"
+                        android:textColor="@color/black"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvAboutDev"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Aplikasi: StatusMax Pro\nVersi: v2.0 (Stable Release)\nDeveloper / Credit: KallOmex\nStudio: XYStudio\nID: id.xystudio.status"
+                        android:textColor="@color/gray_dark"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="12dp"
+                        android:background="@color/gray_light" />
+
+                    <TextView
+                        android:id="@+id/lblChangelog"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Changelog v2.0:\n• Menambahkan Splash Screen Animasi Bola Jatuh.\n• Navigasi Bawah modern 4-Tab.\n• Fitur Anti-Tarik Pesan &amp; Foto 1x Lihat.\n• Fitur Pembersih Cache Mandiri.\n• Menambahkan Fitur Pratinjau Video Instan.\n• Pemisahan filter Media Video vs Gambar.\n• Optimasi 32-bit HP Redmi A2 (No Lag)."
+                        android:textColor="@color/gray_dark"
+                        android:textSize="11sp" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+    </ScrollView>
+
     <!-- FUTURISTIC BOTTOM NAVIGATION BAR -->
     <LinearLayout
         android:id="@+id/bottomNav"
@@ -492,7 +713,7 @@
                 android:layout_height="wrap_content"
                 android:text="HQ Upload"
                 android:textColor="@color/black"
-                android:textSize="13sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -514,7 +735,7 @@
                 android:layout_height="wrap_content"
                 android:text="Unduh Status"
                 android:textColor="@color/gray_dark"
-                android:textSize="13sp" />
+                android:textSize="11sp" />
         </LinearLayout>
 
         <!-- Tab 3: Recovery -->
@@ -535,7 +756,28 @@
                 android:layout_height="wrap_content"
                 android:text="Anti-Tarik"
                 android:textColor="@color/gray_dark"
-                android:textSize="13sp" />
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Tab 4: Settings (New Tab!) -->
+        <LinearLayout
+            android:id="@+id/tabSettings"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtTabSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pengaturan"
+                android:textColor="@color/gray_dark"
+                android:textSize="11sp" />
         </LinearLayout>
 
     </LinearLayout>

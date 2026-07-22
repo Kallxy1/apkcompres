@@ -17,8 +17,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WhatsappHQStatusCompressor">
         
+        <!-- SplashActivity sebagai Pintu Masuk Utama (Launcher) -->
         <activity
-            android:name=".MainActivity"
+            android:name="id.xystudio.status.SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,15 +27,20 @@
             </intent-filter>
         </activity>
 
+        <!-- MainActivity sebagai Halaman Utama Aplikasi -->
+        <activity
+            android:name="id.xystudio.status.MainActivity"
+            android:exported="false" />
+
         <!-- Service 1: Pengolahan Video di Background (Foreground Service) -->
         <service
-            android:name=".CompressionService"
+            android:name="id.xystudio.status.CompressionService"
             android:enabled="true"
             android:exported="false" />
 
         <!-- Service 2: Pemulihan Chat Terhapus & 1x Lihat (Notification Listener) -->
         <service
-            android:name=".NotificationRecoveryService"
+            android:name="id.xystudio.status.NotificationRecoveryService"
             android:label="Anti-Tarik Chat"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true">
@@ -46,7 +52,7 @@
         <!-- FileProvider untuk berbagi file video secara aman -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.kamu.statusmaker.fileprovider"
+            android:authorities="id.xystudio.status.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

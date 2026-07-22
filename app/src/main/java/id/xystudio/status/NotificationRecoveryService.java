@@ -1,4 +1,4 @@
-package com.kamu.statusmaker;
+package id.xystudio.status;
 
 import android.app.Notification;
 import android.content.Context;
