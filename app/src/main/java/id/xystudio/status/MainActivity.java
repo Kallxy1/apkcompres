@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
@@ -41,7 +42,10 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.documentfile.provider.DocumentFile;
 
-
+import com.kamu.statusmaker.R; // Rujukan resources gradle
+import com.kamu.statusmaker.ShareHelper;
+import com.kamu.statusmaker.CompressionService;
+import com.kamu.statusmaker.VideoCompressor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -60,12 +64,14 @@ public class MainActivity extends AppCompatActivity {
     private View screenCompress, screenSaver, screenDeleted, screenSettings;
     private LinearLayout tabCompress, tabSaver, tabDeleted, tabSettings;
     private TextView txtTabCompress, txtTabSaver, txtTabDeleted, txtTabSettings;
+    private ImageView imgTabCompress, imgTabSaver, imgTabDeleted, imgTabSettings;
 
     // Dark/Light Theme Views
     private View mainLayout;
     private ViewGroup headerBar, bottomNav;
     private TextView txtThemeMode;
     private SwitchCompat switchTheme;
+    private ImageView imgThemeIcon;
     private CardView cardSelect, cardEnhance, cardChats, cardClearCache, cardAbout;
 
     // Tab 1: Compress Views
@@ -91,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<File> filteredStatusesList = new ArrayList<>();
     private ArrayList<File> viewOnceList = new ArrayList<>();
     private int activeFilterMode = 0; // 0 = Semua, 1 = Video Saja, 2 = Gambar Saja
+    private boolean isDarkModeActive = false;
 
     // Broadcast Receiver untuk mendeteksi selesainya kompresi di Background Service
     private final BroadcastReceiver compressionReceiver = new BroadcastReceiver() {
@@ -133,6 +140,25 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // Launcher untuk Galeri Kustom Baru kita! (Mengembalikan real path secara instan)
+    private final ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    String path = result.getData().getStringExtra("selectedVideoPath");
+                    if (path != null && !path.isEmpty()) {
+                        selectedVideoPath = path;
+                        File file = new File(path);
+                        tvSelectedFile.setText("Video Siap Diproses:\n" + file.getName());
+                        btnProcessVideo.setVisibility(View.VISIBLE);
+                        btnShare.setVisibility(View.GONE);
+                        cardProgress.setVisibility(View.GONE);
+                        cardPreview.setVisibility(View.GONE);
+                    }
+                }
+            }
+    );
+
     // SAF Folder Tree Picker Launcher (Android 11+)
     private final ActivityResultLauncher<Uri> folderPickerLauncher = registerForActivityResult(
             new ActivityResultContracts.OpenDocumentTree(),
@@ -141,19 +167,6 @@ public class MainActivity extends AppCompatActivity {
                     getContentResolver().takePersistableUriPermission(uri,
                             Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                     loadWhatsAppStatusesAndroid11(uri);
-                }
-            }
-    );
-
-    // Video Picker Launcher
-    private final ActivityResultLauncher<Intent> videoPickerLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    Uri videoUri = result.getData().getData();
-                    if (videoUri != null) {
-                        handleSelectedVideo(videoUri);
-                    }
                 }
             }
     );
@@ -172,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
         bottomNav = findViewById(R.id.bottomNav);
         txtThemeMode = findViewById(R.id.txtThemeMode);
         switchTheme = findViewById(R.id.switchTheme);
+        imgThemeIcon = findViewById(R.id.imgThemeIcon);
 
         cardSelect = findViewById(R.id.cardSelect);
         cardEnhance = findViewById(R.id.cardEnhance);
@@ -192,6 +206,11 @@ public class MainActivity extends AppCompatActivity {
         txtTabSaver = findViewById(R.id.txtTabSaver);
         txtTabDeleted = findViewById(R.id.txtTabDeleted);
         txtTabSettings = findViewById(R.id.txtTabSettings);
+
+        imgTabCompress = findViewById(R.id.imgTabCompress);
+        imgTabSaver = findViewById(R.id.imgTabSaver);
+        imgTabDeleted = findViewById(R.id.imgTabDeleted);
+        imgTabSettings = findViewById(R.id.imgTabSettings);
 
         // Inisialisasi Tab 1 (Compress)
         btnSelectVideo = findViewById(R.id.btnSelectVideo);
@@ -278,23 +297,20 @@ public class MainActivity extends AppCompatActivity {
         // Listener Clear Cache
         btnClearCache.setOnClickListener(v -> performCacheCleanup());
 
+        // Otomatis Deteksi Mode Tema Sistem Saat Peluncuran! (Sistem Default)
+        int nightModeFlags = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        boolean isSystemDark = nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+        switchTheme.setChecked(isSystemDark);
+        applyMinimalTheme(isSystemDark);
+
         // Cek status Folder & Notification Access saat dijalankan
         checkStatusSaverAccess();
         loadRecoveredData();
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        try {
-            unregisterReceiver(compressionReceiver);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     // Penerapan Tema Hitam Putih Minimalis Programmatic (Tidak restart App, Super Smooth!)
     private void applyMinimalTheme(boolean isDark) {
+        isDarkModeActive = isDark;
         int bgColor = isDark ? 0xFF121212 : 0xFFF5F5F5;
         int cardColor = isDark ? 0xFF1E1E1E : 0xFFFFFFFF;
         int textColor = isDark ? 0xFFFFFFFF : 0xFF000000;
@@ -306,6 +322,8 @@ public class MainActivity extends AppCompatActivity {
 
         txtThemeMode.setText(isDark ? "DARK" : "LIGHT");
         txtThemeMode.setTextColor(textColor);
+        imgThemeIcon.setImageResource(isDark ? R.drawable.ic_moon : R.drawable.ic_sun);
+        imgThemeIcon.setImageTintList(ColorStateList.valueOf(textColor));
 
         // Update semua tulisan judul & desc
         TextView hTitle = (TextView) headerBar.getChildAt(0);
@@ -355,11 +373,8 @@ public class MainActivity extends AppCompatActivity {
         tvEmptyDeleted.setTextColor(subTextColor);
         tvDeletedChatsLog.setTextColor(subTextColor);
 
-        // Ganti warna tab teks
-        txtTabCompress.setTextColor(isDark ? 0xFFFFFFFF : 0xFF000000);
-        txtTabSaver.setTextColor(isDark ? 0xFFFFFFFF : 0xFF000000);
-        txtTabDeleted.setTextColor(isDark ? 0xFFFFFFFF : 0xFF000000);
-        txtTabSettings.setTextColor(isDark ? 0xFFFFFFFF : 0xFF000000);
+        // Sinkronkan warna Tab Teks & Ikon Bawah
+        updateTabIconsColor();
     }
 
     private void switchScreen(int screenNumber) {
@@ -373,6 +388,9 @@ public class MainActivity extends AppCompatActivity {
         txtTabDeleted.setTypeface(null, screenNumber == 3 ? Typeface.BOLD : Typeface.NORMAL);
         txtTabSettings.setTypeface(null, screenNumber == 4 ? Typeface.BOLD : Typeface.NORMAL);
 
+        // Warnai Tab yang aktif
+        updateTabIconsColor();
+
         if (screenNumber == 2) {
             checkStatusSaverAccess();
         } else if (screenNumber == 3) {
@@ -380,39 +398,32 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void openVideoPicker() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
-        videoPickerLauncher.launch(intent);
+    private void updateTabIconsColor() {
+        int activeColor = isDarkModeActive ? 0xFFFFFFFF : 0xFF000000;
+        int inactiveColor = isDarkModeActive ? 0xFF555555 : 0xFF888888;
+
+        boolean isTab1 = screenCompress.getVisibility() == View.VISIBLE;
+        boolean isTab2 = screenSaver.getVisibility() == View.VISIBLE;
+        boolean isTab3 = screenDeleted.getVisibility() == View.VISIBLE;
+        boolean isTab4 = screenSettings.getVisibility() == View.VISIBLE;
+
+        txtTabCompress.setTextColor(isTab1 ? activeColor : inactiveColor);
+        imgTabCompress.setImageTintList(ColorStateList.valueOf(isTab1 ? activeColor : inactiveColor));
+
+        txtTabSaver.setTextColor(isTab2 ? activeColor : inactiveColor);
+        imgTabSaver.setImageTintList(ColorStateList.valueOf(isTab2 ? activeColor : inactiveColor));
+
+        txtTabDeleted.setTextColor(isTab3 ? activeColor : inactiveColor);
+        imgTabDeleted.setImageTintList(ColorStateList.valueOf(isTab3 ? activeColor : inactiveColor));
+
+        txtTabSettings.setTextColor(isTab4 ? activeColor : inactiveColor);
+        imgTabSettings.setImageTintList(ColorStateList.valueOf(isTab4 ? activeColor : inactiveColor));
     }
 
-    private void handleSelectedVideo(Uri uri) {
-        try {
-            tvSelectedFile.setText("Membaca data video dari penyimpanan...");
-            File tempFile = new File(getCacheDir(), "temp_input_video.mp4");
-            if (tempFile.exists()) {
-                tempFile.delete();
-            }
-
-            try (InputStream is = getContentResolver().openInputStream(uri);
-                 OutputStream os = new FileOutputStream(tempFile)) {
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                while ((is != null) && (bytesRead = is.read(buffer)) != -1) {
-                    os.write(buffer, 0, bytesRead);
-                }
-            }
-
-            selectedVideoPath = tempFile.getAbsolutePath();
-            tvSelectedFile.setText("Video Siap Diproses:\ntemp_input_video.mp4");
-            btnProcessVideo.setVisibility(View.VISIBLE);
-            btnShare.setVisibility(View.GONE);
-            cardProgress.setVisibility(View.GONE);
-            cardPreview.setVisibility(View.GONE);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Gagal memuat video: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+    // Membuka Galeri Kustom Baru Kita!
+    private void openVideoPicker() {
+        Intent intent = new Intent(this, GalleryActivity.class);
+        galleryLauncher.launch(intent);
     }
 
     // Memulai Kompresi di Background Service (Aman saat App ditutup)
@@ -523,14 +534,14 @@ public class MainActivity extends AppCompatActivity {
     // Memfilter data media di Tab 2 (All, Video, Image)
     private void changeMediaFilter(int mode) {
         activeFilterMode = mode;
-        btnFilterAll.setBackgroundTintList(ContextCompat.getColorStateList(this, mode == 0 ? R.color.black : R.color.gray_light));
-        btnFilterAll.setTextColor(ContextCompat.getColor(this, mode == 0 ? R.color.white : R.color.gray_dark));
+        btnFilterAll.setBackgroundTintList(ColorStateList.valueOf(mode == 0 ? 0xFF000000 : 0xFFF5F5F5));
+        btnFilterAll.setTextColor(mode == 0 ? 0xFFFFFFFF : 0xFF333333);
 
-        btnFilterVideo.setBackgroundTintList(ContextCompat.getColorStateList(this, mode == 1 ? R.color.black : R.color.gray_light));
-        btnFilterVideo.setTextColor(ContextCompat.getColor(this, mode == 1 ? R.color.white : R.color.gray_dark));
+        btnFilterVideo.setBackgroundTintList(ColorStateList.valueOf(mode == 1 ? 0xFF000000 : 0xFFF5F5F5));
+        btnFilterVideo.setTextColor(mode == 1 ? 0xFFFFFFFF : 0xFF333333);
 
-        btnFilterImage.setBackgroundTintList(ContextCompat.getColorStateList(this, mode == 2 ? R.color.black : R.color.gray_light));
-        btnFilterImage.setTextColor(ContextCompat.getColor(this, mode == 2 ? R.color.white : R.color.gray_dark));
+        btnFilterImage.setBackgroundTintList(ColorStateList.valueOf(mode == 2 ? 0xFF000000 : 0xFFF5F5F5));
+        btnFilterImage.setTextColor(mode == 2 ? 0xFFFFFFFF : 0xFF333333);
 
         applyFilterAndDisplay();
     }

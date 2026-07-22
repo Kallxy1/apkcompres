@@ -34,6 +34,14 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
+            <ImageView
+                android:id="@+id/imgThemeIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_sun"
+                android:layout_marginEnd="8dp"
+                app:tint="@color/black" />
+
             <TextView
                 android:id="@+id/txtThemeMode"
                 android:layout_width="wrap_content"
@@ -424,6 +432,7 @@
             android:text="HUBUNGKAN FOLDER STATUS"
             android:textColor="@color/white"
             android:textStyle="bold"
+            android:visibility="gone"
             app:cornerRadius="10dp" />
 
         <!-- Grid of Statuses -->
@@ -442,7 +451,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="Belum terhubung ke WhatsApp. Klik tombol hitam di atas."
+            android:text="Menghubungkan ke folder penyimpanan internal..."
             android:textColor="@color/gray_dark"
             android:textSize="13sp" />
     </LinearLayout>
@@ -676,7 +685,7 @@
                         android:id="@+id/lblChangelog"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Changelog v2.0:\n• Menambahkan Splash Screen Animasi Bola Jatuh.\n• Navigasi Bawah modern 4-Tab.\n• Fitur Anti-Tarik Pesan &amp; Foto 1x Lihat.\n• Fitur Pembersih Cache Mandiri.\n• Menambahkan Fitur Pratinjau Video Instan.\n• Pemisahan filter Media Video vs Gambar.\n• Optimasi 32-bit HP Redmi A2 (No Lag)."
+                        android:text="Changelog v2.0:\n• Menambahkan Splash Screen Animasi Bola Jatuh.\n• Navigasi Bawah modern 4-Tab dengan Ikon Vektor.\n• Fitur Anti-Tarik Pesan &amp; Foto 1x Lihat.\n• Fitur Pembersih Cache Mandiri.\n• Menambahkan Fitur Pratinjau Video Instan.\n• Pemisahan filter Media Video vs Gambar.\n• Optimasi 32-bit HP Redmi A2 (No Lag)."
                         android:textColor="@color/gray_dark"
                         android:textSize="11sp" />
 
@@ -686,7 +695,7 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- FUTURISTIC BOTTOM NAVIGATION BAR -->
+    <!-- FUTURISTIC BOTTOM NAVIGATION BAR (Now with genuine Vector Icons, no Emojis!) -->
     <LinearLayout
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
@@ -707,13 +716,21 @@
             android:background="?android:attr/selectableItemBackground"
             android:orientation="vertical">
 
+            <ImageView
+                android:id="@+id/imgTabCompress"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_upload"
+                app:tint="@color/black" />
+
             <TextView
                 android:id="@+id/txtTabCompress"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
                 android:text="HQ Upload"
                 android:textColor="@color/black"
-                android:textSize="11sp"
+                android:textSize="10sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -729,13 +746,21 @@
             android:background="?android:attr/selectableItemBackground"
             android:orientation="vertical">
 
+            <ImageView
+                android:id="@+id/imgTabSaver"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_saver"
+                app:tint="@color/gray_dark" />
+
             <TextView
                 android:id="@+id/txtTabSaver"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
                 android:text="Unduh Status"
                 android:textColor="@color/gray_dark"
-                android:textSize="11sp" />
+                android:textSize="10sp" />
         </LinearLayout>
 
         <!-- Tab 3: Recovery -->
@@ -750,16 +775,24 @@
             android:background="?android:attr/selectableItemBackground"
             android:orientation="vertical">
 
+            <ImageView
+                android:id="@+id/imgTabDeleted"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_recovery"
+                app:tint="@color/gray_dark" />
+
             <TextView
                 android:id="@+id/txtTabDeleted"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
                 android:text="Anti-Tarik"
                 android:textColor="@color/gray_dark"
-                android:textSize="11sp" />
+                android:textSize="10sp" />
         </LinearLayout>
 
-        <!-- Tab 4: Settings (New Tab!) -->
+        <!-- Tab 4: Settings -->
         <LinearLayout
             android:id="@+id/tabSettings"
             android:layout_width="0dp"
@@ -771,13 +804,21 @@
             android:background="?android:attr/selectableItemBackground"
             android:orientation="vertical">
 
+            <ImageView
+                android:id="@+id/imgTabSettings"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_settings"
+                app:tint="@color/gray_dark" />
+
             <TextView
                 android:id="@+id/txtTabSettings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
                 android:text="Pengaturan"
                 android:textColor="@color/gray_dark"
-                android:textSize="11sp" />
+                android:textSize="10sp" />
         </LinearLayout>
 
     </LinearLayout>
