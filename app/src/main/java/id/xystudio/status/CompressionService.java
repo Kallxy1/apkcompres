@@ -56,7 +56,7 @@ public class CompressionService extends Service {
                     updateNotificationSuccess("Sukses! Video siap diunggah ke status WA.", outputPath);
                     
                     // Beri tahu Activity utama lewat broadcast lokal
-                    Intent broadcast = new Intent("com.kamu.statusmaker.COMPRESSION_DONE");
+                    Intent broadcast = new Intent("id.xystudio.status.COMPRESSION_DONE");
                     broadcast.putExtra("success", true);
                     broadcast.putExtra("outputPath", outputPath);
                     sendBroadcast(broadcast);
@@ -68,7 +68,7 @@ public class CompressionService extends Service {
                 public void onFailure(String errorMessage) {
                     updateNotificationFailure("Gagal mengompresi: " + errorMessage);
                     
-                    Intent broadcast = new Intent("com.kamu.statusmaker.COMPRESSION_DONE");
+                    Intent broadcast = new Intent("id.xystudio.status.COMPRESSION_DONE");
                     broadcast.putExtra("success", false);
                     broadcast.putExtra("error", errorMessage);
                     sendBroadcast(broadcast);

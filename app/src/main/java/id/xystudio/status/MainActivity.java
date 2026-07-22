@@ -41,10 +41,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.documentfile.provider.DocumentFile;
 
-import com.kamu.statusmaker.R; // Rujukan resources gradle
-import com.kamu.statusmaker.ShareHelper;
-import com.kamu.statusmaker.CompressionService;
-import com.kamu.statusmaker.VideoCompressor;
+
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -167,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Register receiver kompresi background
-        registerReceiver(compressionReceiver, new IntentFilter("com.kamu.statusmaker.COMPRESSION_DONE"));
+        registerReceiver(compressionReceiver, new IntentFilter("id.xystudio.status.COMPRESSION_DONE"));
 
         // Inisialisasi Layout Utama & Tema
         mainLayout = findViewById(R.id.mainLayout);
