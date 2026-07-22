@@ -23,7 +23,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
-import com.kamu.statusmaker.R;
 
 import java.io.File;
 import java.util.ArrayList;

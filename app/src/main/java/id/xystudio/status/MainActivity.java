@@ -42,10 +42,6 @@ import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.documentfile.provider.DocumentFile;
 
-import com.kamu.statusmaker.R; // Rujukan resources gradle
-import com.kamu.statusmaker.ShareHelper;
-import com.kamu.statusmaker.CompressionService;
-import com.kamu.statusmaker.VideoCompressor;
 
 import java.io.File;
 import java.io.FileOutputStream;
