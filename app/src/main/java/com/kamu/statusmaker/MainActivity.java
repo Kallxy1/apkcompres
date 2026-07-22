@@ -59,7 +59,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView txtTabCompress, txtTabSaver, txtTabDeleted;
 
     // Dark/Light Theme Views
-    private View mainLayout, headerBar, bottomNav;
+    private View mainLayout;
+    private ViewGroup headerBar, bottomNav; // Perbaikan: Gunakan ViewGroup agar getChildAt dapat dipanggil
     private TextView txtThemeMode;
     private SwitchCompat switchTheme;
     private CardView cardSelect, cardEnhance;
@@ -308,6 +309,12 @@ public class MainActivity extends AppCompatActivity {
         } else if (screenNumber == 3) {
             loadRecoveredData();
         }
+    }
+
+    // Perbaikan: Tambahkan method openVideoPicker() yang sempat hilang
+    private void openVideoPicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+        videoPickerLauncher.launch(intent);
     }
 
     private void handleSelectedVideo(Uri uri) {
