@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Izin untuk membaca media dari galeri -->
+    <!-- Izin Dasar Penyimpanan -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    
+    <!-- Izin untuk menjalankan Background Service & Notifikasi -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -22,7 +26,24 @@
             </intent-filter>
         </activity>
 
-        <!-- FileProvider untuk berbagi file video hasil kompresi secara aman ke WhatsApp -->
+        <!-- Service 1: Pengolahan Video di Background (Foreground Service) -->
+        <service
+            android:name=".CompressionService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Service 2: Pemulihan Chat Terhapus & 1x Lihat (Notification Listener) -->
+        <service
+            android:name=".NotificationRecoveryService"
+            android:label="Anti-Tarik Chat"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- FileProvider untuk berbagi file video secara aman -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.kamu.statusmaker.fileprovider"

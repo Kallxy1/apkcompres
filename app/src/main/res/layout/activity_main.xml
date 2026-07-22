@@ -2,20 +2,56 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/gray_light"
-    tools:context=".MainActivity">
+    android:background="@color/gray_light">
 
-    <!-- Top Action Bar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <!-- MINIMALIST HEADER BAR (No Top Bar - Sleek Minimal Header) -->
+    <RelativeLayout
+        android:id="@+id/headerBar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/whatsapp_green_dark"
-        app:title="StatusMax Pro"
-        app:titleTextColor="@color/white"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="70dp"
+        android:paddingHorizontal="20dp"
+        android:background="@color/white"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="StatusMax"
+            android:textColor="@color/black"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <!-- Working Dark/Light Mode Switch -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/txtThemeMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LIGHT"
+                android:textColor="@color/gray_dark"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchTheme"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:thumbTint="@color/black"
+                app:trackTint="@color/slate_grey" />
+        </LinearLayout>
+    </RelativeLayout>
 
     <!-- SCREEN 1: HQ COMPRESS & ENHANCER -->
     <ScrollView
@@ -24,20 +60,22 @@
         android:layout_height="0dp"
         android:visibility="visible"
         app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintTop_toBottomOf="@id/toolbar">
+        app:layout_constraintTop_toBottomOf="@id/headerBar">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="20dp">
 
             <!-- Card: Select Video -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/cardSelect"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
+                app:cardBackgroundColor="@color/white"
+                app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -46,18 +84,20 @@
                     android:padding="20dp">
 
                     <TextView
+                        android:id="@+id/lblTitle1"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Optimasi &amp; Penjernih Video"
-                        android:textColor="@color/whatsapp_green"
+                        android:text="HQ Video Optimizer"
+                        android:textColor="@color/black"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/lblDesc1"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Pilih video portrait berkualitas tinggi dari galeri Anda untuk dikompresi secara presisi."
+                        android:text="Menghaluskan dan menstabilkan video Anda agar lolos kompresi kasar WhatsApp."
                         android:textColor="@color/gray_dark"
                         android:textSize="12sp" />
 
@@ -66,8 +106,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="55dp"
                         android:layout_marginTop="20dp"
-                        android:backgroundTint="@color/whatsapp_green"
-                        android:text="PILIH VIDEO DARI GALERI"
+                        android:backgroundTint="@color/black"
+                        android:text="PILIH VIDEO"
                         android:textColor="@color/white"
                         android:textStyle="bold"
                         app:cornerRadius="10dp" />
@@ -87,11 +127,13 @@
 
             <!-- Card: Optimasi Penjernih (Ultra Clear) -->
             <androidx.cardview.widget.CardView
+                android:id="@+id/cardEnhance"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
+                app:cardBackgroundColor="@color/white"
+                app:cardElevation="2dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -104,9 +146,10 @@
                         android:layout_height="wrap_content">
 
                         <TextView
+                            android:id="@+id/lblTitle2"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Mode Jernih Ultra (Enhancer)"
+                            android:text="Menerapkan Filter Penajam"
                             android:textColor="@color/black"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -118,16 +161,17 @@
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
                             android:checked="true"
-                            app:thumbTint="@color/whatsapp_green_light"
-                            app:trackTint="@color/whatsapp_green" />
+                            app:thumbTint="@color/black"
+                            app:trackTint="@color/slate_grey" />
 
                     </RelativeLayout>
 
                     <TextView
+                        android:id="@+id/lblDesc2"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
-                        android:text="Menggunakan filter unsharp mask profesional dan penyesuaian kontras cerdas untuk menjernihkan video yang burik sebelum dikirim ke WA!"
+                        android:text="Menggunakan unsharp mask ringan untuk mempertajam tepi video tanpa membuat video lag/patah-patah saat diputar di HP kentang."
                         android:textColor="@color/gray_dark"
                         android:textSize="11sp" />
 
@@ -142,7 +186,8 @@
                 android:layout_marginTop="16dp"
                 android:visibility="gone"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/white"
+                app:cardElevation="2dp"
                 tools:visibility="visible">
 
                 <LinearLayout
@@ -152,6 +197,7 @@
                     android:padding="20dp">
 
                     <TextView
+                        android:id="@+id/lblProgress"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Status Pemrosesan Video"
@@ -166,7 +212,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:indeterminate="true"
-                        android:progressTint="@color/whatsapp_green_light" />
+                        android:progressTint="@color/black" />
 
                     <!-- Live Step Progress Logs -->
                     <LinearLayout
@@ -221,7 +267,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:layout_marginTop="24dp"
-                android:backgroundTint="@color/whatsapp_green_light"
+                android:backgroundTint="@color/black"
                 android:text="PROSES &amp; OPTIMALKAN VIDEO"
                 android:textColor="@color/white"
                 android:textSize="15sp"
@@ -235,7 +281,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:layout_marginTop="16dp"
-                android:backgroundTint="@color/whatsapp_green"
+                android:backgroundTint="@color/black"
                 android:text="BAGIKAN KE STATUS WHATSAPP"
                 android:textColor="@color/white"
                 android:textSize="15sp"
@@ -253,24 +299,26 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:padding="20dp"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintTop_toBottomOf="@id/headerBar"
         tools:visibility="gone">
 
         <TextView
+            android:id="@+id/lblTitleSaver"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Status WhatsApp Teman"
+            android:text="Status WhatsApp Aktif"
             android:textColor="@color/black"
             android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/lblDescSaver"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Berikan izin ke folder status WhatsApp Anda untuk membackup status secara otomatis."
+            android:text="Menampilkan semua status WhatsApp teman yang aktif secara lokal di HP Anda."
             android:textColor="@color/gray_dark"
             android:textSize="12sp" />
 
@@ -279,8 +327,8 @@
             android:layout_width="match_parent"
             android:layout_height="55dp"
             android:layout_marginTop="16dp"
-            android:backgroundTint="@color/whatsapp_green"
-            android:text="BERIKAN IZIN FOLDER STATUS"
+            android:backgroundTint="@color/black"
+            android:text="HUBUNGKAN FOLDER STATUS WHATSAPP"
             android:textColor="@color/white"
             android:textStyle="bold"
             app:cornerRadius="10dp" />
@@ -301,57 +349,121 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
-            android:text="Belum ada status yang dimuat. Klik tombol hijau di atas."
+            android:text="Belum terhubung ke WhatsApp. Klik tombol hitam di atas."
             android:textColor="@color/gray_dark"
             android:textSize="13sp" />
     </LinearLayout>
 
-    <!-- SCREEN 3: STATUS TERHAPUS (RECOVERED) -->
-    <LinearLayout
+    <!-- SCREEN 3: RECOVERY CENTER (Pusat Pemulihan Pesan Terhapus & 1x Lihat) -->
+    <ScrollView
         android:id="@+id/screenDeleted"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:orientation="vertical"
-        android:padding="16dp"
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/bottomNav"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintTop_toBottomOf="@id/headerBar"
         tools:visibility="gone">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Status Teman yang Terhapus"
-            android:textColor="@color/black"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:orientation="vertical"
+            android:padding="20dp">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Semua status yang dihapus oleh teman Anda sebelum 24 jam akan tetap tersimpan di sini!"
-            android:textColor="@color/gray_dark"
-            android:textSize="12sp" />
+            <TextView
+                android:id="@+id/lblTitleRecovery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Pusat Pemulihan (Anti-Tarik)"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-        <GridView
-            android:id="@+id/gridDeleted"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="16dp"
-            android:numColumns="3"
-            android:horizontalSpacing="8dp"
-            android:verticalSpacing="8dp"
-            android:visibility="gone" />
+            <TextView
+                android:id="@+id/lblDescRecovery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Memulihkan chat terhapus, foto 1x dilihat, dan status yang dihapus."
+                android:textColor="@color/gray_dark"
+                android:textSize="12sp" />
 
-        <TextView
-            android:id="@+id/tvEmptyDeleted"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="Belum mendeteksi adanya status yang dihapus."
-            android:textColor="@color/gray_dark"
-            android:textSize="13sp" />
-    </LinearLayout>
+            <Button
+                android:id="@+id/btnGrantNotification"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="@color/black"
+                android:text="AKTIFKAN ANTI-TARIK CHAT"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="10dp" />
+
+            <!-- Sub-Section 1: View Once Intercepted Images -->
+            <TextView
+                android:id="@+id/lblSubViewOnce"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="📷 Foto 1x Dilihat Terpulihkan"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <GridView
+                android:id="@+id/gridDeleted"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="8dp"
+                android:numColumns="3"
+                android:horizontalSpacing="8dp"
+                android:verticalSpacing="8dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvEmptyDeleted"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="Belum mendeteksi adanya foto 1x dilihat."
+                android:textColor="@color/gray_dark"
+                android:textSize="12sp" />
+
+            <!-- Sub-Section 2: Deleted Chats Log -->
+            <TextView
+                android:id="@+id/lblSubChats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="💬 Obrolan WhatsApp Terhapus"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardChats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:cardCornerRadius="12dp"
+                app:cardBackgroundColor="@color/white"
+                app:cardElevation="1dp">
+
+                <TextView
+                    android:id="@+id/tvDeletedChatsLog"
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"
+                    android:padding="12dp"
+                    android:scrollbars="vertical"
+                    android:text="Belum mendeteksi adanya pesan obrolan yang dihapus oleh teman."
+                    android:textColor="@color/gray_dark"
+                    android:textSize="12sp" />
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+    </ScrollView>
 
     <!-- FUTURISTIC BOTTOM NAVIGATION BAR -->
     <LinearLayout
@@ -379,7 +491,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="HQ Upload"
-                android:textColor="@color/whatsapp_green"
+                android:textColor="@color/black"
                 android:textSize="13sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -405,7 +517,7 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
-        <!-- Tab 3: Deleted -->
+        <!-- Tab 3: Recovery -->
         <LinearLayout
             android:id="@+id/tabDeleted"
             android:layout_width="0dp"
@@ -421,7 +533,7 @@
                 android:id="@+id/txtTabDeleted"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Status Terhapus"
+                android:text="Anti-Tarik"
                 android:textColor="@color/gray_dark"
                 android:textSize="13sp" />
         </LinearLayout>

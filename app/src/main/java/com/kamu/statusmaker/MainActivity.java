@@ -1,9 +1,11 @@
 package com.kamu.statusmaker;
 
 import android.Manifest;
-import android.content.ContentResolver;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -12,7 +14,7 @@ import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.DocumentsContract;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,12 +35,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.documentfile.provider.DocumentFile;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -56,6 +58,12 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout tabCompress, tabSaver, tabDeleted;
     private TextView txtTabCompress, txtTabSaver, txtTabDeleted;
 
+    // Dark/Light Theme Views
+    private View mainLayout, headerBar, bottomNav;
+    private TextView txtThemeMode;
+    private SwitchCompat switchTheme;
+    private CardView cardSelect, cardEnhance;
+
     // Tab 1: Compress Views
     private Button btnSelectVideo, btnProcessVideo, btnShare;
     private TextView tvSelectedFile, logStep1, logStep2, logStep3, logStep4;
@@ -63,26 +71,49 @@ public class MainActivity extends AppCompatActivity {
     private CardView cardProgress;
     private ProgressBar progressBar;
 
-    // Tab 2 & 3: Status Views
-    private Button btnGrantFolder;
+    // Tab 2 & 3: Status & Recovery Views
+    private Button btnGrantFolder, btnGrantNotification;
     private GridView gridStatuses, gridDeleted;
-    private TextView tvEmptySaver, tvEmptyDeleted;
+    private TextView tvEmptySaver, tvEmptyDeleted, tvDeletedChatsLog;
+    private CardView cardChats;
 
     // Data
     private String selectedVideoPath = "";
     private String compressedVideoPath = "";
     private ArrayList<File> activeStatusesList = new ArrayList<>();
-    private ArrayList<File> deletedStatusesList = new ArrayList<>();
+    private ArrayList<File> viewOnceList = new ArrayList<>();
 
-    // SAF Folder Picker Launcher (Untuk akses status WA di Android 11+)
+    // Broadcast Receiver untuk mendeteksi selesainya kompresi di Background Service
+    private final BroadcastReceiver compressionReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean success = intent.getBooleanExtra("success", false);
+            btnSelectVideo.setEnabled(true);
+            btnProcessVideo.setEnabled(true);
+            cardProgress.setVisibility(View.GONE);
+
+            if (success) {
+                compressedVideoPath = intent.getStringExtra("outputPath");
+                btnProcessVideo.setVisibility(View.GONE);
+                btnShare.setVisibility(View.VISIBLE);
+                tvSelectedFile.setText("Status: Selesai! Video dioptimalkan dalam background.");
+                Toast.makeText(MainActivity.this, "Sukses Menjernihkan Video!", Toast.LENGTH_LONG).show();
+            } else {
+                String error = intent.getStringExtra("error");
+                tvSelectedFile.setText("Proses background gagal.");
+                Toast.makeText(MainActivity.this, "Gagal: " + error, Toast.LENGTH_LONG).show();
+            }
+        }
+    };
+
+    // SAF Folder Tree Picker Launcher (Android 11+)
     private final ActivityResultLauncher<Uri> folderPickerLauncher = registerForActivityResult(
             new ActivityResultContracts.OpenDocumentTree(),
             uri -> {
                 if (uri != null) {
-                    // Simpan izin akses folder secara permanen agar tidak minta izin lagi
                     getContentResolver().takePersistableUriPermission(uri,
                             Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                    loadWhatsAppStatuses(uri);
+                    loadWhatsAppStatusesAndroid11(uri);
                 }
             }
     );
@@ -105,7 +136,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Inisialisasi Layout Utama
+        // Register receiver kompresi background
+        registerReceiver(compressionReceiver, new IntentFilter("com.kamu.statusmaker.COMPRESSION_DONE"));
+
+        // Inisialisasi Layout Utama & Tema
+        mainLayout = findViewById(R.id.mainLayout);
+        headerBar = findViewById(R.id.headerBar);
+        bottomNav = findViewById(R.id.bottomNav);
+        txtThemeMode = findViewById(R.id.txtThemeMode);
+        switchTheme = findViewById(R.id.switchTheme);
+
+        cardSelect = findViewById(R.id.cardSelect);
+        cardEnhance = findViewById(R.id.cardEnhance);
+
         screenCompress = findViewById(R.id.screenCompress);
         screenSaver = findViewById(R.id.screenSaver);
         screenDeleted = findViewById(R.id.screenDeleted);
@@ -134,10 +177,16 @@ public class MainActivity extends AppCompatActivity {
 
         // Inisialisasi Tab 2 & 3
         btnGrantFolder = findViewById(R.id.btnGrantFolder);
+        btnGrantNotification = findViewById(R.id.btnGrantNotification);
         gridStatuses = findViewById(R.id.gridStatuses);
         gridDeleted = findViewById(R.id.gridDeleted);
         tvEmptySaver = findViewById(R.id.tvEmptySaver);
         tvEmptyDeleted = findViewById(R.id.tvEmptyDeleted);
+        tvDeletedChatsLog = findViewById(R.id.tvDeletedChatsLog);
+        cardChats = findViewById(R.id.cardChats);
+
+        // Set Up Switch Tema Hitam Putih (Truly Working!)
+        switchTheme.setOnCheckedChangeListener((buttonView, isChecked) -> applyMinimalTheme(isChecked));
 
         // Pasang Navigasi Tab
         tabCompress.setOnClickListener(v -> switchScreen(1));
@@ -155,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
 
         btnProcessVideo.setOnClickListener(v -> {
             if (!selectedVideoPath.isEmpty()) {
-                startCompression();
+                startBackgroundCompressionService();
             }
         });
 
@@ -166,36 +215,99 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Listener Status Saver
-        btnGrantFolder.setOnClickListener(v -> requestWhatsAppFolderPermission());
+        btnGrantFolder.setOnClickListener(v -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                requestWhatsAppFolderPermissionAndroid11();
+            } else {
+                loadWhatsAppStatusesLegacy();
+            }
+        });
 
-        // Otomatis cek folder jika sudah diizinkan sebelumnya
-        checkExistingFolderPermission();
+        btnGrantNotification.setOnClickListener(v -> {
+            Intent intent = new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+            startActivity(intent);
+        });
+
+        // Cek status Folder & Notification Access saat dijalankan
+        checkStatusSaverAccess();
+        loadRecoveredData();
     }
 
-    // Toggle Tampilan Antarmuka Tab
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(compressionReceiver);
+    }
+
+    // Penerapan Tema Hitam Putih Minimalis Programmatic (Tidak restart App, Super Smooth!)
+    private void applyMinimalTheme(boolean isDark) {
+        int bgColor = isDark ? 0xFF121212 : 0xFFF5F5F5;
+        int cardColor = isDark ? 0xFF1E1E1E : 0xFFFFFFFF;
+        int textColor = isDark ? 0xFFFFFFFF : 0xFF000000;
+        int subTextColor = isDark ? 0xFF888888 : 0xFF333333;
+
+        mainLayout.setBackgroundColor(bgColor);
+        headerBar.setBackgroundColor(cardColor);
+        bottomNav.setBackgroundColor(cardColor);
+
+        txtThemeMode.setText(isDark ? "DARK" : "LIGHT");
+        txtThemeMode.setTextColor(textColor);
+
+        // Update semua tulisan judul & desc
+        TextView hTitle = (TextView) headerBar.getChildAt(0);
+        hTitle.setTextColor(textColor);
+
+        // Update Card background
+        cardSelect.setCardBackgroundColor(cardColor);
+        cardEnhance.setCardBackgroundColor(cardColor);
+        cardProgress.setCardBackgroundColor(cardColor);
+        cardChats.setCardBackgroundColor(cardColor);
+
+        // Update tulisan di Compress Card
+        ((TextView) findViewById(R.id.lblTitle1)).setTextColor(textColor);
+        ((TextView) findViewById(R.id.lblDesc1)).setTextColor(subTextColor);
+        ((TextView) findViewById(R.id.lblTitle2)).setTextColor(textColor);
+        ((TextView) findViewById(R.id.lblDesc2)).setTextColor(subTextColor);
+        ((TextView) findViewById(R.id.lblProgress)).setTextColor(textColor);
+
+        tvSelectedFile.setTextColor(subTextColor);
+        logStep1.setTextColor(subTextColor);
+        logStep2.setTextColor(subTextColor);
+        logStep3.setTextColor(subTextColor);
+        logStep4.setTextColor(subTextColor);
+
+        // Update Saver & Recovery Card
+        ((TextView) findViewById(R.id.lblTitleSaver)).setTextColor(textColor);
+        ((TextView) findViewById(R.id.lblDescSaver)).setTextColor(subTextColor);
+        ((TextView) findViewById(R.id.lblTitleRecovery)).setTextColor(textColor);
+        ((TextView) findViewById(R.id.lblDescRecovery)).setTextColor(subTextColor);
+        ((TextView) findViewById(R.id.lblSubViewOnce)).setTextColor(textColor);
+        ((TextView) findViewById(R.id.lblSubChats)).setTextColor(textColor);
+
+        tvEmptySaver.setTextColor(subTextColor);
+        tvEmptyDeleted.setTextColor(subTextColor);
+        tvDeletedChatsLog.setTextColor(subTextColor);
+
+        // Ganti warna tab teks
+        txtTabCompress.setTextColor(isDark ? 0xFFFFFFFF : 0xFF000000);
+        txtTabSaver.setTextColor(isDark ? 0xFFFFFFFF : 0xFF000000);
+        txtTabDeleted.setTextColor(isDark ? 0xFFFFFFFF : 0xFF000000);
+    }
+
     private void switchScreen(int screenNumber) {
         screenCompress.setVisibility(screenNumber == 1 ? View.VISIBLE : View.GONE);
         screenSaver.setVisibility(screenNumber == 2 ? View.VISIBLE : View.GONE);
         screenDeleted.setVisibility(screenNumber == 3 ? View.VISIBLE : View.GONE);
 
-        // Perbaikan: Gunakan setTypeface untuk mengubah ketebalan teks programmatically di Java
-        txtTabCompress.setTextColor(ContextCompat.getColor(this, screenNumber == 1 ? R.color.whatsapp_green : R.color.gray_dark));
         txtTabCompress.setTypeface(null, screenNumber == 1 ? Typeface.BOLD : Typeface.NORMAL);
-
-        txtTabSaver.setTextColor(ContextCompat.getColor(this, screenNumber == 2 ? R.color.whatsapp_green : R.color.gray_dark));
         txtTabSaver.setTypeface(null, screenNumber == 2 ? Typeface.BOLD : Typeface.NORMAL);
-
-        txtTabDeleted.setTextColor(ContextCompat.getColor(this, screenNumber == 3 ? R.color.whatsapp_green : R.color.gray_dark));
         txtTabDeleted.setTypeface(null, screenNumber == 3 ? Typeface.BOLD : Typeface.NORMAL);
 
-        if (screenNumber == 2 || screenNumber == 3) {
-            checkExistingFolderPermission();
+        if (screenNumber == 2) {
+            checkStatusSaverAccess();
+        } else if (screenNumber == 3) {
+            loadRecoveredData();
         }
-    }
-
-    private void openVideoPicker() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
-        videoPickerLauncher.launch(intent);
     }
 
     private void handleSelectedVideo(Uri uri) {
@@ -227,117 +339,104 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startCompression() {
+    // Memulai Kompresi di Background Service (Aman saat App ditutup)
+    private void startBackgroundCompressionService() {
         File outputDir = getExternalFilesDir(null);
         File outputFile = new File(outputDir, "WA_STATUS_MAX_" + System.currentTimeMillis() + ".mp4");
         compressedVideoPath = outputFile.getAbsolutePath();
 
-        boolean isEnhanced = switchEnhance.isChecked();
+        Intent serviceIntent = new Intent(this, CompressionService.class);
+        serviceIntent.putExtra("inputPath", selectedVideoPath);
+        serviceIntent.putExtra("outputPath", compressedVideoPath);
+        serviceIntent.putExtra("isEnhanced", switchEnhance.isChecked());
 
-        VideoCompressor.compressForWhatsApp(selectedVideoPath, compressedVideoPath, isEnhanced, new VideoCompressor.CompressionCallback() {
-            @Override
-            public void onStart() {
-                runOnUiThread(() -> {
-                    btnSelectVideo.setEnabled(false);
-                    btnProcessVideo.setEnabled(false);
-                    btnShare.setVisibility(View.GONE);
-                    cardProgress.setVisibility(View.VISIBLE);
-                    
-                    logStep1.setText("● Membaca metadata & orientasi video... (Sukses)");
-                    logStep1.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.whatsapp_green));
-                    
-                    logStep2.setText("○ Menerapkan filter penajam (unsharp)...");
-                    logStep2.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.gray_dark));
-                    
-                    logStep3.setText("○ Mengonversi audio ke standar stereo AAC...");
-                    logStep3.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.gray_dark));
-                    
-                    logStep4.setText("○ Melakukan encoding kompresi presisi x264...");
-                    logStep4.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.gray_dark));
-                });
-            }
+        btnSelectVideo.setEnabled(false);
+        btnProcessVideo.setEnabled(false);
+        cardProgress.setVisibility(View.VISIBLE);
+        logStep1.setText("● Memulai optimasi video di latar belakang... (Sukses)");
 
-            @Override
-            public void onProgress(String message) {
-                runOnUiThread(() -> {
-                    if (message.contains("Penajam")) {
-                        logStep2.setText("● Menerapkan filter penajam (unsharp) & kontras... (Sukses)");
-                        logStep2.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.whatsapp_green));
-                    } else if (message.contains("audio")) {
-                        logStep3.setText("● Mengonversi audio ke standar stereo AAC... (Sukses)");
-                        logStep3.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.whatsapp_green));
-                    } else if (message.contains("encoding")) {
-                        logStep4.setText("● Melakukan encoding kompresi presisi x264... (Sedang Berjalan)");
-                        logStep4.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.whatsapp_green_light));
-                    }
-                });
-            }
-
-            @Override
-            public void onSuccess(String outputPath) {
-                runOnUiThread(() -> {
-                    btnSelectVideo.setEnabled(true);
-                    btnProcessVideo.setEnabled(true);
-                    btnProcessVideo.setVisibility(View.GONE);
-                    cardProgress.setVisibility(View.GONE);
-                    btnShare.setVisibility(View.VISIBLE);
-                    Toast.makeText(MainActivity.this, "Sukses Menjernihkan & Kompres Video!", Toast.LENGTH_LONG).show();
-                    tvSelectedFile.setText("Status: Selesai! Video jauh lebih jernih & siap diunggah.");
-                });
-            }
-
-            @Override
-            public void onFailure(String errorMessage) {
-                runOnUiThread(() -> {
-                    btnSelectVideo.setEnabled(true);
-                    btnProcessVideo.setEnabled(true);
-                    cardProgress.setVisibility(View.GONE);
-                    tvSelectedFile.setText("Proses gagal.");
-                    Toast.makeText(MainActivity.this, "Gagal: " + errorMessage, Toast.LENGTH_LONG).show();
-                });
-            }
-        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
     }
 
     // ==========================================
-    // BAGIAN FITUR STATUS SAVER & STATUS TERHAPUS
+    // SINKRONISASI STATUS WA DUAL-PATH (LEGACY & ANDROID 11+)
     // ==========================================
 
-    private void requestWhatsAppFolderPermission() {
-        // Alamat folder status WA di Android 11 ke atas
+    private void checkStatusSaverAccess() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+ (Mengecek izin akses folder SAF)
+            List<android.content.UriPermission> permissions = getContentResolver().getPersistedUriPermissions();
+            if (permissions != null && !permissions.isEmpty()) {
+                for (android.content.UriPermission perm : permissions) {
+                    if (perm.getUri().toString().contains("com.whatsapp")) {
+                        loadWhatsAppStatusesAndroid11(perm.getUri());
+                        return;
+                    }
+                }
+            }
+            btnGrantFolder.setVisibility(View.VISIBLE);
+            gridStatuses.setVisibility(View.GONE);
+            tvEmptySaver.setVisibility(View.VISIBLE);
+        } else {
+            // Android 10 kebawah (Bisa langsung dibaca tanpa folder picker SAF!)
+            btnGrantFolder.setVisibility(View.GONE);
+            loadWhatsAppStatusesLegacy();
+        }
+    }
+
+    private void requestWhatsAppFolderPermissionAndroid11() {
         String targetFolder = "Android/media/com.whatsapp/WhatsApp/Media/.Statuses";
         Uri uri = Uri.parse("content://com.android.externalstorage.documents/tree/primary%3A" + Uri.encode(targetFolder));
-        
         try {
             folderPickerLauncher.launch(uri);
         } catch (Exception e) {
-            // Fallback jika path tidak didukung oleh file picker bawaan HP
             folderPickerLauncher.launch(null);
         }
     }
 
-    private void checkExistingFolderPermission() {
-        List<android.content.UriPermission> permissions = getContentResolver().getPersistedUriPermissions();
-        if (permissions != null && !permissions.isEmpty()) {
-            for (android.content.UriPermission perm : permissions) {
-                if (perm.getUri().toString().contains("com.whatsapp")) {
-                    loadWhatsAppStatuses(perm.getUri());
-                    return;
+    // Loading status untuk HP Android 10 kebawah (Langsung Sinkron tanpa ribet)
+    private void loadWhatsAppStatusesLegacy() {
+        activeStatusesList.clear();
+        String[] possiblePaths = {
+            Environment.getExternalStorageDirectory() + "/WhatsApp/Media/.Statuses",
+            Environment.getExternalStorageDirectory() + "/Android/media/com.whatsapp/WhatsApp/Media/.Statuses",
+            Environment.getExternalStorageDirectory() + "/WhatsApp Business/Media/.Statuses",
+            Environment.getExternalStorageDirectory() + "/Android/media/com.whatsapp.w4b/WhatsApp Business/Media/.Statuses"
+        };
+
+        for (String path : possiblePaths) {
+            File folder = new File(path);
+            if (folder.exists() && folder.isDirectory()) {
+                File[] files = folder.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        if (file.isFile() && (file.getName().endsWith(".jpg") || file.getName().endsWith(".mp4") || file.getName().endsWith(".gif"))) {
+                            activeStatusesList.add(file);
+                        }
+                    }
                 }
             }
         }
-        btnGrantFolder.setVisibility(View.VISIBLE);
-        gridStatuses.setVisibility(View.GONE);
-        tvEmptySaver.setVisibility(View.VISIBLE);
+
+        if (!activeStatusesList.isEmpty()) {
+            gridStatuses.setVisibility(View.VISIBLE);
+            gridStatuses.setAdapter(new StatusAdapter(this, activeStatusesList, false));
+            tvEmptySaver.setVisibility(View.GONE);
+        } else {
+            gridStatuses.setVisibility(View.GONE);
+            tvEmptySaver.setVisibility(View.VISIBLE);
+            tvEmptySaver.setText("Tidak ada status aktif yang terdeteksi.");
+        }
     }
 
-    private void loadWhatsAppStatuses(Uri folderUri) {
-        btnGrantFolder.setVisibility(View.GONE);
-        tvEmptySaver.setVisibility(View.GONE);
-
+    // Loading status untuk Android 11+ lewat SAF
+    private void loadWhatsAppStatusesAndroid11(Uri folderUri) {
         activeStatusesList.clear();
         DocumentFile rootFolder = DocumentFile.fromTreeUri(this, folderUri);
-        
         File backupDir = new File(getFilesDir(), "status_backups");
         if (!backupDir.exists()) {
             backupDir.mkdirs();
@@ -345,33 +444,15 @@ public class MainActivity extends AppCompatActivity {
 
         if (rootFolder != null && rootFolder.exists()) {
             DocumentFile[] files = rootFolder.listFiles();
-            Set<String> activeFileNames = new HashSet<>();
-
             for (DocumentFile doc : files) {
                 if (doc.isFile() && (doc.getName().endsWith(".jpg") || doc.getName().endsWith(".mp4") || doc.getName().endsWith(".gif"))) {
-                    // Salin status aktif ke cache lokal agar bisa dimuat di GridView
                     File cacheFile = copyDocumentToLocal(doc, backupDir);
                     if (cacheFile != null) {
                         activeStatusesList.add(cacheFile);
-                        activeFileNames.add(cacheFile.getName());
                     }
                 }
             }
 
-            // ISI LOGIKA STATUS TERHAPUS:
-            // Jika ada file di folder "status_backups" tetapi namanya sudah tidak terdaftar di status aktif,
-            // berarti status tersebut sudah dihapus oleh teman Anda sebelum 24 jam atau sudah kedaluwarsa!
-            deletedStatusesList.clear();
-            File[] backedFiles = backupDir.listFiles();
-            if (backedFiles != null) {
-                for (File file : backedFiles) {
-                    if (!activeFileNames.contains(file.getName()) && file.isFile()) {
-                        deletedStatusesList.add(file);
-                    }
-                }
-            }
-
-            // Tampilkan Grid
             if (!activeStatusesList.isEmpty()) {
                 gridStatuses.setVisibility(View.VISIBLE);
                 gridStatuses.setAdapter(new StatusAdapter(this, activeStatusesList, false));
@@ -381,25 +462,14 @@ public class MainActivity extends AppCompatActivity {
                 tvEmptySaver.setVisibility(View.VISIBLE);
                 tvEmptySaver.setText("Tidak ada status aktif yang terdeteksi.");
             }
-
-            if (!deletedStatusesList.isEmpty()) {
-                gridDeleted.setVisibility(View.VISIBLE);
-                gridDeleted.setAdapter(new StatusAdapter(this, deletedStatusesList, true));
-                tvEmptyDeleted.setVisibility(View.GONE);
-            } else {
-                gridDeleted.setVisibility(View.GONE);
-                tvEmptyDeleted.setVisibility(View.VISIBLE);
-                tvEmptyDeleted.setText("Belum mendeteksi adanya status yang dihapus oleh teman.");
-            }
         }
     }
 
     private File copyDocumentToLocal(DocumentFile doc, File destDir) {
         File destFile = new File(destDir, doc.getName());
         if (destFile.exists()) {
-            return destFile; // Sudah di-backup sebelumnya
+            return destFile;
         }
-
         try (InputStream is = getContentResolver().openInputStream(doc.getUri());
              OutputStream os = new FileOutputStream(destFile)) {
             byte[] buffer = new byte[4096];
@@ -414,7 +484,53 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Custom Adapter untuk menampilkan Grid Statuses di HP Kentang (Tanpa lag)
+    // ==========================================
+    // PEMULIHAN CHAT TERHAPUS & FOTO 1X LIHAT
+    // ==========================================
+
+    private void loadRecoveredData() {
+        SharedPreferences prefs = getSharedPreferences("RecoveryPrefs", Context.MODE_PRIVATE);
+
+        // 1. Muat riwayat Chat Terhapus
+        String deletedChats = prefs.getString("deleted_chats", "");
+        if (!deletedChats.isEmpty()) {
+            tvDeletedChatsLog.setText(deletedChats);
+        } else {
+            tvDeletedChatsLog.setText("Belum mendeteksi adanya pesan obrolan yang dihapus oleh teman.");
+        }
+
+        // 2. Muat Foto 1x Lihat Terpulihkan
+        viewOnceList.clear();
+        File viewOnceDir = new File(getFilesDir(), "recovered_view_once");
+        if (viewOnceDir.exists() && viewOnceDir.isDirectory()) {
+            File[] files = viewOnceDir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (f.isFile() && f.getName().endsWith(".png")) {
+                        viewOnceList.add(f);
+                    }
+                }
+            }
+        }
+
+        if (!viewOnceList.isEmpty()) {
+            gridDeleted.setVisibility(View.VISIBLE);
+            gridDeleted.setAdapter(new StatusAdapter(this, viewOnceList, true));
+            tvEmptyDeleted.setVisibility(View.GONE);
+        } else {
+            gridDeleted.setVisibility(View.GONE);
+            tvEmptyDeleted.setVisibility(View.VISIBLE);
+        }
+
+        // 3. Update Status Tombol Notification Access
+        boolean isNotificationAccessGranted = NotificationManagerCompat.getEnabledListenerPackages(this).contains(getPackageName());
+        btnGrantNotification.setVisibility(isNotificationAccessGranted ? View.GONE : View.VISIBLE);
+    }
+
+    // ==========================================
+    // CUSTOM ADAPTER STATUS
+    // ==========================================
+
     private static class StatusAdapter extends BaseAdapter {
         private final Context context;
         private final ArrayList<File> files;
@@ -449,8 +565,7 @@ public class MainActivity extends AppCompatActivity {
 
             ImageView imageView = convertView.findViewById(android.R.id.icon);
             TextView textView = convertView.findViewById(android.R.id.text1);
-            
-            // Konfigurasi ukuran item grid
+
             ViewGroup.LayoutParams params = convertView.getLayoutParams();
             if (params == null) {
                 params = new GridView.LayoutParams(250, 250);
@@ -461,10 +576,9 @@ public class MainActivity extends AppCompatActivity {
             convertView.setLayoutParams(params);
 
             File file = files.get(position);
-            textView.setText(isDeletedMode ? "TERHAPUS" : "STATUS");
-            textView.setTextSize(10); // Perbaikan: Gunakan float murni, bukan literal "10sp"
+            textView.setText(isDeletedMode ? "TERPULIHKAN" : "STATUS");
+            textView.setTextSize(10);
 
-            // Muat thumbnail gambar/video secara aman demi hemat RAM HP kentang
             if (file.getName().endsWith(".mp4")) {
                 Bitmap thumb = ThumbnailUtils.createVideoThumbnail(file.getAbsolutePath(), MediaStore.Images.Thumbnails.MINI_KIND);
                 if (thumb != null) {
@@ -481,7 +595,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            // Klik item untuk membuka status (simulasi buka foto/video)
             convertView.setOnClickListener(v -> {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 Uri uri = FileProvider.getUriForFile(context, "com.kamu.statusmaker.fileprovider", file);
@@ -493,7 +606,6 @@ public class MainActivity extends AppCompatActivity {
             return convertView;
         }
 
-        // Helper untuk dekompresi gambar beresolusi tinggi menjadi pas di GridView (anti Out-Of-Memory)
         private Bitmap decodeSampledBitmapFromFile(String path, int reqWidth, int reqHeight) {
             final BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
